@@ -39,7 +39,7 @@ class gpio
 
         // Configure pins 20 and 21 for output
         // pin 20 is button "0",
-        // pin 21 is button "1"
+	// pin 21 is button "1"
 
         struct gpio_pin pinStatus;
 
@@ -47,14 +47,14 @@ class gpio
         int r = ioctl(m_fd, GPIOGETCONFIG, &pinStatus);
         pinStatus.gp_flags = GPIO_PIN_OUTPUT;
         r = ioctl(m_fd, GPIOSETCONFIG, &pinStatus);
-
+    
         pinStatus.gp_pin = 21;
         r = ioctl(m_fd, GPIOGETCONFIG, &pinStatus);
         pinStatus.gp_flags = GPIO_PIN_OUTPUT;
         r = ioctl(m_fd, GPIOSETCONFIG, &pinStatus);
-
+    
         // Set initial state to high = relay off
-
+    
         struct gpio_req rq;
         rq.gp_pin = 20;
         rq.gp_value = GPIO_PIN_HIGH;
@@ -89,8 +89,8 @@ class gpio
         // Mash the button for a quarter second
 
         struct timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = 250000000;
+	ts.tv_sec = 0;
+	ts.tv_nsec = 250000000;
         nanosleep(&ts, &ts);
 
         r = ioctl(m_fd, GPIOTOGGLE, &rq);
@@ -107,10 +107,11 @@ struct webSeperators : std::ctype<char>
     static mask const * get_table()
     {
         static mask rc[table_size];
-        rc['?'] = std::ctype_base::space;
-        rc['='] = std::ctype_base::space;
-        rc['\n'] = std::ctype_base::space;
-        return &rc[0];
+	rc['/'] = std::ctype_base::space;
+	rc['?'] = std::ctype_base::space;
+	rc['='] = std::ctype_base::space;
+	rc['\n'] = std::ctype_base::space;
+	return &rc[0];
     }
 };
 
@@ -134,24 +135,29 @@ public:
 
     std::string page, name;
     unsigned button;
+
     S >> page >> name >> button;
-    std::cout << "page " << page << " name " << name << " button " << button << std::endl;
+    std::cout << "page: " << page << std::endl;
 
-    // Mush the button
+    if (name == "button")
+    {
+        std::cout << "name: " << name << std::endl << "button: " << button << std::endl;
 
-    G.toggle(button);
+        // Mush the button
+
+        G.toggle(button);
+    }
 
     // Respond to the browser
 
     ostream& out = resp.send();
-    out << "<h1>Hello world!</h1>"
-        << "<p>Count: "  << ++count         << "</p>"
-        << "<p>Host: "   << req.getHost()   << "</p>"
-        << "<p>Method: " << req.getMethod() << "</p>"
-        << "<p>URI: "    << req.getURI()    << "</p>"
-        << "<p> page: "  << page            << "</p>"
-        << "<p> name: "  << name            << "</p>"
-        << "<p> button: "<< button          << "</p>";
+    out << "<h1>Garage Door Opener</h1>"
+        << "<form action=\"" << page << "\" method=\"get\">"
+        << "<div>"
+        << "<button name=\"button\" value=\"0\" type=\"submit\">Big Door</button>"
+        << "<button name=\"button\" value=\"1\" type=\"submit\">Little Door</button>"
+        << "</div>"
+        << "</form>";
     out.flush();
 
     cout << endl
